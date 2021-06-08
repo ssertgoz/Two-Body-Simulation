@@ -62,8 +62,9 @@ class TwoBodyController:
             u[i] = u0[i] + ut[i]
 
     def euler(self,h,u):
-        #TODO
-        pass
+        du = self.derivative()
+        for i in range(4):
+            u[i] = u[i] + du[i]*h
 
     def calculateNewPosition(self):
         r = 1 # distance between bodies
@@ -77,22 +78,20 @@ class TwoBodyController:
         self.positions[1]["y"] = a1 * self.u[1]
 
     def updatePosition(self):
-        startTime = time.time()
-        timeDifference = 0
-        while self.T/1000 >= timeDifference:
+        for i in range(int(self.T/self.dt)):
             if(self.method == 1):
                 self.rungeKutta(self.dt,self.u)
             else:
                 self.euler(self.dt,self.u)
-            self.recordPositions()
             self.calculateNewPosition()
-            lastTime = time.time()
-            timeDifference = lastTime - startTime
+            self.recordPositions()
+            
 
     def recordPositions(self):
          self.text += str(self.positions[0]["x"]) + "," + str(self.positions[0]["y"]) + "," + str(self.positions[1]["x"]) + "," + str(self.positions[1]["y"]) + "\n"
+    
     def savePositionsToFile(self):
-        file = open("locationVectors.txt","w")
+        file = open("locationVectorPY.txt","w")
         file.write(self.text)
         file.close()
 
@@ -115,6 +114,7 @@ class App:
         self.T = int(input("Enter T : "))
         self.dt = float(input("Enter time step h : "))
         self.massRatio = float(input("Enter mass ratio : "))
+        self.eccentricity = float(input("Enten eccentricity : "))
         self.method = int(input("Enter 1 for Runge-Kutta or 2 for Euler's method: "))
 
 

@@ -10,75 +10,27 @@ class TwoBodyView:
         """Initialize pygame and the application."""
         pygame.init()
         flags = RESIZABLE
-        TwoBodyView.screen = pygame.display.set_mode((900, 600), flags)
-
-        TwoBodyView.t = Text('Pygame App', pos=(20, 20))
-        TwoBodyView.body1 = Body("earth.png",(200,20),0.1)
+        TwoBodyView.screenWidth = 1200
+        TwoBodyView.screenHeight = 700
+        TwoBodyView.screen = pygame.display.set_mode((TwoBodyView.screenWidth, TwoBodyView.screenHeight), flags)
+        TwoBodyView.body1 = Body("earth.png",(200,20),0.04) # you can change size of bodies by changing last parameter
         TwoBodyView.body2 = Body("sun.png",(400,20),0.1)
 
         TwoBodyView.running = True
         TwoBodyView.playing = True
-
-    def simulate(self):
-        """Run the main event loop."""
-        while TwoBodyView.running:
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    TwoBodyView.running = False
-            TwoBodyView.screen.fill(Color('black'))
-            TwoBodyView.t.updatePosition()
-            TwoBodyView.body1.draw()
-            TwoBodyView.body2.draw()
-            pygame.display.update()
-
-        pygame.quit()
-
-
-    def drawBodies(self, body1, body2, body1NewPos, body2NewPos):
-        body1.setPosition(body1NewPos)
-        body2.setPosition(body2NewPos)
-        body1.draw()
-        body2.draw()
-
-    def drawOrbit(self, body1Pos, body2Pos):
-        pass
-    def oyle(self):
-        TwoBodyView.t.updatePosition()
+        TwoBodyView.reload = False
 
 
 
-class Text:
-    """Create a text object."""
+    def drawBodies(self, body1NewPos, body2NewPos):
+        TwoBodyView.body1.setPosition(body1NewPos)
+        TwoBodyView.body2.setPosition(body2NewPos)
+        TwoBodyView.body1.draw()
+        TwoBodyView.body2.draw()
 
-    def __init__(self, text, pos, **options):
-        self.text = text
-        self.pos = pos
-        self.count = 1
 
-        self.fontname = None
-        self.fontsize = 72
-        self.fontcolor = Color('white')
-        self.set_font()
-        self.render()
 
-    def set_font(self):
-        """Set the Font object from name and size."""
-        self.font = pygame.font.Font(self.fontname, self.fontsize)
 
-    def render(self):
-        """Render the text into an image."""
-        self.img = self.font.render(self.text, True, self.fontcolor)
-        self.rect = self.img.get_rect()
-        self.rect.topleft = self.pos
-
-    def draw(self):
-        """Draw the text image to the screen."""
-        TwoBodyView.screen.blit(self.img, self.rect)
-    def updatePosition(self):
-        self.count += 1
-        self.pos = (self.count,20)
-        self.render()
-        self.draw()
 
 class Body:
     def __init__(self, image, pos, scale):
@@ -101,20 +53,65 @@ class Body:
         self.rect.y = pos[1]
 
 
-def simulate():
-    """Run the main event loop."""
-    while TwoBodyView.running:
+class App:
+    def __init__(self):
+        self.startIndex = 0
+
+    def readFile(self):
+        file = open("locationVectorC.txt","r")
+        lines = file.readlines()
+        file.close()
+        return lines
+
+    def run(self):
+        view = TwoBodyView()
+        lines = self.readFile()
+        clock = pygame.time.Clock()
+
+        while TwoBodyView.running:
+            self.getEvent()
+            while TwoBodyView.playing:
+                TwoBodyView.reload = False
+                for i in range(self.startIndex,len(lines)):
+                    self.getEvent()
+                    if (not TwoBodyView.running or not TwoBodyView.playing or TwoBodyView.reload):
+                        break
+                    pygame.display.flip()
+                    clock.tick(60)
+
+                    splittedLine = lines[i].split(",")
+                    TwoBodyView.screen.fill(Color('black')) # you can see the orbit when you make comment this line
+                    view.drawBodies(self.transformPosition((float(splittedLine[0]),float(splittedLine[1]))),self.transformPosition((float(splittedLine[2]),float(splittedLine[3]))))
+                    pygame.display.update()
+                    self.startIndex += 1
+                #self.startIndex = 0
+
+        pygame.quit()
+
+        
+    def transformPosition(self, rawPos):
+        origin = (int(TwoBodyView.screenWidth/2-200),int(TwoBodyView.screenHeight/2-0))
+        transformParameter = 150
+        transformedPos = (int(rawPos[0]*transformParameter + origin[0]), int(rawPos[1]*transformParameter + origin[1]))
+        return  transformedPos
+
+    def getEvent(self):
         for event in pygame.event.get():
             if event.type == QUIT:
                 TwoBodyView.running = False
-        TwoBodyView.screen.fill(Color('black'))
-        TwoBodyView.t.updatePosition()
-        TwoBodyView.body1.draw()
-        TwoBodyView.body2.draw()
-        pygame.display.update()
+                TwoBodyView.playing = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    TwoBodyView.running = False
+                    TwoBodyView.playing = False
+                elif event.key == pygame.K_SPACE:
+                    TwoBodyView.playing = not TwoBodyView.playing
+                elif event.key == pygame.K_r:
+                    TwoBodyView.reload = True
+                    TwoBodyView.playing = True
+                    self.startIndex = 0
 
-    pygame.quit()
+
 
 if __name__ == '__main__':
-    TwoBodyView()
-    simulate()
+    App().run()
