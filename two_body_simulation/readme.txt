@@ -1,9 +1,3 @@
-Student's Name   I.D.Number  Department
-Beylem Yavuz     260206002   ECE
-Hatice Obuz      270206039   ECE
-Serdar Sertgöz   260201030   CENG
-Ertuğrul Demir   260201059   CENG
-
 
 python version = Python 3.7.4
 pygame version = pygame 1.9.6
